@@ -1725,6 +1725,7 @@ void mc_interface_mc_timer_isr(bool is_second_motor) {
 
 	// Check for faults that should stop the motor
 	static int wrong_voltage_iterations = 0;
+	static int odo_saved_flag = 0;
 	if (input_voltage < conf_now->l_min_vin ||
 			input_voltage > conf_now->l_max_vin) {
 		wrong_voltage_iterations++;
@@ -1732,9 +1733,14 @@ void mc_interface_mc_timer_isr(bool is_second_motor) {
 		if ((wrong_voltage_iterations >= 8)) {
 			mc_interface_fault_stop(input_voltage < conf_now->l_min_vin ?
 					FAULT_CODE_UNDER_VOLTAGE : FAULT_CODE_OVER_VOLTAGE, is_second_motor, true);
+			if ((odo_saved_flag == 0)) {
+ 				conf_general_store_backup_data();
+ 				odo_saved_flag = 1;
+ 			}
 		}
 	} else {
 		wrong_voltage_iterations = 0;
+		odo_saved_flag = 0;
 	}
 
 	// Fetch these values in a config-specific way to avoid some overhead of the general
